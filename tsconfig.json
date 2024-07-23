@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "target": "ES2020",                                  /* Set the JavaScript language version for 
+    /* Modules */
+    "module": "NodeNext",                                /* Specify what module code is generated. */
+    "rootDir": "src",                                  /* Specify the root folder within your source files. */
+    "moduleResolution": "NodeNext",                       /* Specify how TypeScript looks up a file 
+    nd not JavaScript files. */
+    "outDir": "dist",                                   /* Specify an output folder for all emitted 
+   */
+    "esModuleInterop": true,                             /* Emit additional JavaScript to ease 
+    "forceConsistentCasingInFileNames": true,           
+    /* Type Checking */
+    "strict": true,                                     
+  }
+}
