@@ -1,5 +1,7 @@
 import express from 'express'
 import NodeCache from 'node-cache'
+import path from 'path'
+import 'dotenv/config'
 
 // Routes imports
 import userRoutes from './routes/user-routes.js'
@@ -7,18 +9,18 @@ import productRoutes from './routes/product-routes.js'
 
 // Middleware imports
 import { errorMiddleware } from './middlewares/error.js'
-import { logger } from './middlewares/logger.js'
+import morgan from 'morgan'
 
+// Utils imports
 import { connectDB } from './utils/features.js'
-import path from 'path'
 
-const PORT = 3000
+const PORT = process.env.PORT || 3000
 const app = express()
 export const myCache = new NodeCache()
 
 connectDB()
 
-app.use(logger)
+app.use(morgan('dev'))
 
 app.use(express.json())
 

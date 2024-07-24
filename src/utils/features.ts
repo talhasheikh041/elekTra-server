@@ -5,26 +5,42 @@ import { myCache } from '../app.js'
 
 export const connectDB = async () => {
    try {
-      const { connection } = await mongoose.connect('mongodb://localhost:27017/', { dbName: 'elektraDB' })
+      const { connection } = await mongoose.connect(process.env.DATABASE_URI!, { dbName: 'elektraDB' })
       console.log(`Connected to DB ${connection.host}`)
    } catch (error) {
       console.log(error)
    }
 }
 
-export const invalidateCache = async ({ product, admin, order }: InvalidateCacheParam) => {
+export const invalidateCache = ({ product, admin, order, orderId, userId, productId }: InvalidateCacheParam) => {
    if (product) {
       const productKeys: string[] = ['latest-products', 'product-categories', 'admin-products']
-      const productIDs = await Product.find().select('_id')
 
-      productIDs.forEach((i) => {
-         productKeys.push(`product-${i._id}`)
-      })
+      if (productId && Array.isArray(productId)) {
+         productId.forEach((id) => productKeys.push(`product-${id}`))
+      }
+      if (productId && typeof productId === 'string') {
+         productKeys.push(`product-${productId}`)
+      }
 
       myCache.del(productKeys)
    }
+   if (order) {
+      const orderKeys: string[] = ['all-orders', `order-${orderId}`, `myOrders-${userId}`]
+      myCache.del(orderKeys)
+   }
    if (admin) {
    }
-   if (order) {
+}
+
+export const getFromCache = <T>(key: string): T | null => {
+   if (myCache.has(key)) {
+      return JSON.parse(myCache.get(key) as string)
+   } else {
+      return null
    }
+}
+
+export const setCache = (key: string, value: any) => {
+   myCache.set(key, JSON.stringify(value))
 }

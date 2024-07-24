@@ -12,6 +12,7 @@
     "esModuleInterop": true,                             /* Emit additional JavaScript to ease 
     "forceConsistentCasingInFileNames": true,           
     /* Type Checking */
-    "strict": true,                                     
+    "strict": true,        
+    "sourceMap": true                             
   }
 }

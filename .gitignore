@@ -27,3 +27,5 @@ logs
 
 # dist
 /dist
+
+.vscode

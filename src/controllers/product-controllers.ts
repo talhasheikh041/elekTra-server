@@ -6,7 +6,7 @@ import { rm } from 'fs'
 import { Product } from '../models/Product.js'
 import { isValidObjectId } from 'mongoose'
 import { myCache } from '../app.js'
-import { invalidateCache } from '../utils/features.js'
+import { getFromCache, invalidateCache, setCache } from '../utils/features.js'
 
 export const newProduct = tryCatch(async (req: Request<{}, {}, INewProductRequestBody>, res: Response) => {
    const { name, category, price, stock } = req.body
@@ -40,14 +40,17 @@ export const newProduct = tryCatch(async (req: Request<{}, {}, INewProductReques
 })
 
 export const getLatestProducts = tryCatch(async (req, res) => {
-   let latestProducts
+   const cachedLatestProducts = getFromCache('latest-products')
 
-   if (myCache.has('latest-products')) {
-      latestProducts = JSON.parse(myCache.get('latest-products') as string)
-   } else {
-      latestProducts = await Product.find().sort({ createdAt: 'desc' }).limit(15)
-      myCache.set('latest-products', JSON.stringify(latestProducts))
+   if (cachedLatestProducts) {
+      return res.status(200).json({
+         success: true,
+         latestProducts: cachedLatestProducts,
+      })
    }
+
+   const latestProducts = await Product.find().sort({ createdAt: 'desc' }).limit(15)
+   setCache('latest-products', latestProducts)
 
    if (!latestProducts.length) throw new ErrorHandler('No Latest Products Found', 404)
 
@@ -58,14 +61,17 @@ export const getLatestProducts = tryCatch(async (req, res) => {
 })
 
 export const getAllCategories = tryCatch(async (req, res) => {
-   let productCategories
+   const cachedProductCategories = getFromCache('product-categories')
 
-   if (myCache.has('product-categories')) {
-      productCategories = JSON.parse(myCache.get('product-categories') as string)
-   } else {
-      productCategories = await Product.distinct('category')
-      myCache.set('product-categories', JSON.stringify(productCategories))
+   if (cachedProductCategories) {
+      return res.status(200).json({
+         success: true,
+         productCategories: cachedProductCategories,
+      })
    }
+
+   const productCategories = await Product.distinct('category')
+   setCache('product-categories', productCategories)
 
    if (!productCategories.length) throw new ErrorHandler('No Categories Found', 404)
 
@@ -76,14 +82,17 @@ export const getAllCategories = tryCatch(async (req, res) => {
 })
 
 export const getAdminProducts = tryCatch(async (req, res) => {
-   let adminProducts
+   const cachedAdminProducts = getFromCache('admin-products')
 
-   if (myCache.has('admin-products')) {
-      adminProducts = JSON.parse(myCache.get('admin-products') as string)
-   } else {
-      adminProducts = await Product.find()
-      myCache.set('admin-products', JSON.stringify(adminProducts))
+   if (cachedAdminProducts) {
+      return res.status(200).json({
+         success: true,
+         allProducts: cachedAdminProducts,
+      })
    }
+
+   const adminProducts = await Product.find()
+   setCache('admin-products', adminProducts)
 
    if (!adminProducts.length) throw new ErrorHandler('No Categories Found', 404)
 
@@ -100,14 +109,17 @@ export const getSingleProduct = tryCatch(async (req, res) => {
 
    if (!isValidObjectId(id)) throw new ErrorHandler('Invalid Product ID', 400)
 
-   let product
+   const cachedProduct = getFromCache(`product-${id}`)
 
-   if (myCache.has(`product-${id}`)) {
-      product = JSON.parse(myCache.get(`product-${id}`) as string)
-   } else {
-      product = await Product.findById(id)
-      myCache.set(`product-${id}`, JSON.stringify(product))
+   if (cachedProduct) {
+      return res.status(200).json({
+         success: true,
+         product: cachedProduct,
+      })
    }
+
+   const product = await Product.findById(id)
+   setCache(`product-${id}`, product)
 
    if (!product) throw new ErrorHandler('No product found', 404)
 
@@ -142,7 +154,7 @@ export const updateProduct = tryCatch(async (req, res) => {
 
    if (!updatedProduct) throw new ErrorHandler('Cannot update the product! Check database', 400)
 
-   invalidateCache({ product: true })
+   invalidateCache({ product: true, productId: id })
 
    res.status(200).json({
       success: true,
@@ -160,7 +172,7 @@ export const deleteProduct = tryCatch(async (req, res) => {
    rm(product.photo, (err) => err && console.log(err))
    await product.deleteOne()
 
-   invalidateCache({ product: true })
+   invalidateCache({ product: true, productId: id })
 
    res.status(200).json({
       success: true,
