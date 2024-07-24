@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { InvalidateCacheParam } from '../types/types.js'
+import { InvalidateCacheParam, OrderItemType } from '../types/types.js'
 import { Product } from '../models/Product.js'
 import { myCache } from '../app.js'
 
@@ -43,4 +43,13 @@ export const getFromCache = <T>(key: string): T | null => {
 
 export const setCache = (key: string, value: any) => {
    myCache.set(key, JSON.stringify(value))
+}
+
+export const reduceStock = async (orderItems: OrderItemType[]) => {
+   for (let item of orderItems) {
+      const product = await Product.findById(item.productId)
+      if (!product) throw new Error('Product not found')
+      product.stock -= item.quantity
+      await product.save()
+   }
 }

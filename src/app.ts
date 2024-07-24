@@ -6,6 +6,7 @@ import 'dotenv/config'
 // Routes imports
 import userRoutes from './routes/user-routes.js'
 import productRoutes from './routes/product-routes.js'
+import orderRoutes from "./routes/order-routes.js"
 
 // Middleware imports
 import { errorMiddleware } from './middlewares/error.js'
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
 })
 app.use('/api/v1/user', userRoutes)
 app.use('/api/v1/product', productRoutes)
+app.use('/api/v1/order', orderRoutes)
 
 app.all('*', (req, res) => {
    res.status(404)
