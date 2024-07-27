@@ -31,7 +31,7 @@ export const newProduct = tryCatch(async (req: Request<{}, {}, INewProductReques
 
    if (!product) throw new ErrorHandler('Product cannot be created! Check Database for errors!', 400)
 
-   invalidateCache({ product: true })
+   invalidateCache({ product: true, admin: true })
 
    res.status(200).json({
       success: true,
@@ -154,7 +154,7 @@ export const updateProduct = tryCatch(async (req, res) => {
 
    if (!updatedProduct) throw new ErrorHandler('Cannot update the product! Check database', 400)
 
-   invalidateCache({ product: true, productId: id })
+   invalidateCache({ product: true, admin: true, productId: id })
 
    res.status(200).json({
       success: true,
@@ -172,7 +172,7 @@ export const deleteProduct = tryCatch(async (req, res) => {
    rm(product.photo, (err) => err && console.log(err))
    await product.deleteOne()
 
-   invalidateCache({ product: true, productId: id })
+   invalidateCache({ product: true, admin: true, productId: id })
 
    res.status(200).json({
       success: true,

@@ -11,6 +11,8 @@ interface IOrderSchema extends Document {
    total: number
    status: 'Processing' | 'Shipped' | 'Delivered'
    orderItems: OrderItemType[]
+   createdAt: Date
+   updatedAt: Date
 }
 
 const orderSchema = new mongoose.Schema<IOrderSchema>(

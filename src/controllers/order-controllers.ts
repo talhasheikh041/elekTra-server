@@ -112,7 +112,7 @@ export const getSingleOrder = tryCatch(async (req, res) => {
       })
    }
 
-   const order = await Order.findById(orderId).populate("user", "name")
+   const order = await Order.findById(orderId).populate('user', 'name')
    if (!order) throw new ErrorHandler('Cannot find order details', 404)
    setCache(`order-${orderId}`, order)
 
@@ -143,7 +143,7 @@ export const processOrder = tryCatch(async (req, res) => {
 
    await order.save()
 
-   invalidateCache({ order: true, orderId, userId: order.user.toString() })
+   invalidateCache({ order: true, admin: true, orderId, userId: order.user.toString() })
 
    res.status(200).json({
       success: true,
@@ -161,7 +161,7 @@ export const deleteOrder = tryCatch(async (req, res) => {
 
    await order.deleteOne()
 
-   invalidateCache({ order: true, orderId, userId: order.user })
+   invalidateCache({ order: true, admin: true, orderId, userId: order.user })
 
    res.status(200).json({
       success: true,

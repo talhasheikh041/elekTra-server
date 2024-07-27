@@ -11,7 +11,7 @@ export const adminOnly = tryCatch(async (req, res, next) => {
 
    if (!user) throw new ErrorHandler('Invalid User ID. No User found!', 401)
 
-   if (user.role !== 'admin') throw new ErrorHandler('Only Admin can access this resource!', 401)
+   if (user.role !== 'admin') throw new ErrorHandler('Only Admin can access this resource!', 403)
 
    next()
 })

@@ -30,6 +30,7 @@ export const invalidateCache = ({ product, admin, order, orderId, userId, produc
       myCache.del(orderKeys)
    }
    if (admin) {
+      myCache.del(['admin-stats', 'admin-pie-charts', 'admin-bar-charts', 'admin-line-charts'])
    }
 }
 
@@ -52,4 +53,68 @@ export const reduceStock = async (orderItems: OrderItemType[]) => {
       product.stock -= item.quantity
       await product.save()
    }
+}
+
+export const calculatePercentage = (currentMonthItems: number, lastMonthItems: number) => {
+   if (lastMonthItems === 0) {
+      return currentMonthItems * 100
+   }
+
+   const percent = (currentMonthItems / lastMonthItems) * 100
+   return Number(percent.toFixed(0))
+}
+
+export const getCategoryPercentage = async ({
+   allCategories,
+   productCount,
+}: {
+   allCategories: string[]
+   productCount: number
+}) => {
+   const categoriesCountQueries = allCategories.map((category) => Product.countDocuments({ category }))
+
+   const categoriesCount = await Promise.all(categoriesCountQueries)
+
+   const categoriesPercentage: Record<string, number> = allCategories.reduce((total, category, index) => {
+      const count = categoriesCount[index]
+      return {
+         ...total,
+         [category]: (count / productCount) * 100,
+      }
+   }, {})
+
+   return categoriesPercentage
+}
+
+interface MyDocument extends Document {
+   createdAt: Date
+   discount?: number
+   total?: number
+}
+
+type GetChartDataType = {
+   length: number
+   docArr: MyDocument[]
+   today: Date
+   property?: 'discount' | 'total'
+}
+
+export const getChartData = ({ length, docArr, today, property }: GetChartDataType) => {
+   const data: number[] = new Array(length).fill(0)
+
+   // Fill the array by comparing the difference beteen present month and orderCreationMonth
+   docArr.forEach((i) => {
+      const dataCreationMonth = i.createdAt.getMonth()
+      const monthDiff = (today.getMonth() - dataCreationMonth + 12) % 12
+
+      if (monthDiff < length) {
+         if (property) {
+            data[length - monthDiff - 1] += i[property]!
+         } else {
+            data[length - monthDiff - 1] += 1
+         }
+      }
+   })
+
+   return data
 }
