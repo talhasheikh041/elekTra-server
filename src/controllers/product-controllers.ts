@@ -7,12 +7,15 @@ import { Product } from '../models/Product.js'
 import { isValidObjectId } from 'mongoose'
 import { myCache } from '../app.js'
 import { getFromCache, invalidateCache, setCache } from '../utils/features.js'
+import path from 'path'
 
 export const newProduct = tryCatch(async (req: Request<{}, {}, INewProductRequestBody>, res: Response) => {
    const { name, category, price, stock } = req.body
    const photo = req.file
 
    if (!photo) throw new ErrorHandler('Please provide product photo', 400)
+
+   console.log(req.body)
 
    if (!name || !category || !price || !stock) {
       rm(photo.path, (err) => {
@@ -26,7 +29,7 @@ export const newProduct = tryCatch(async (req: Request<{}, {}, INewProductReques
       price,
       stock,
       category: category.toLocaleLowerCase(),
-      photo: photo.path,
+      photo: photo.filename,
    })
 
    if (!product) throw new ErrorHandler('Product cannot be created! Check Database for errors!', 400)
@@ -45,18 +48,19 @@ export const getLatestProducts = tryCatch(async (req, res) => {
    if (cachedLatestProducts) {
       return res.status(200).json({
          success: true,
-         latestProducts: cachedLatestProducts,
+         products: cachedLatestProducts,
       })
    }
 
    const latestProducts = await Product.find().sort({ createdAt: 'desc' }).limit(15)
-   setCache('latest-products', latestProducts)
 
    if (!latestProducts.length) throw new ErrorHandler('No Latest Products Found', 404)
 
+   setCache('latest-products', latestProducts)
+
    res.status(200).json({
       success: true,
-      latestProducts,
+      products: latestProducts,
    })
 })
 
@@ -66,7 +70,7 @@ export const getAllCategories = tryCatch(async (req, res) => {
    if (cachedProductCategories) {
       return res.status(200).json({
          success: true,
-         productCategories: cachedProductCategories,
+         categories: cachedProductCategories,
       })
    }
 
@@ -77,7 +81,7 @@ export const getAllCategories = tryCatch(async (req, res) => {
 
    res.status(200).json({
       success: true,
-      productCategories,
+      categories: productCategories,
    })
 })
 
@@ -87,18 +91,18 @@ export const getAdminProducts = tryCatch(async (req, res) => {
    if (cachedAdminProducts) {
       return res.status(200).json({
          success: true,
-         allProducts: cachedAdminProducts,
+         products: cachedAdminProducts,
       })
    }
 
    const adminProducts = await Product.find()
    setCache('admin-products', adminProducts)
 
-   if (!adminProducts.length) throw new ErrorHandler('No Categories Found', 404)
+   if (!adminProducts.length) throw new ErrorHandler('No Products Found', 404)
 
    res.status(200).json({
       success: true,
-      allProducts: adminProducts,
+      products: adminProducts,
    })
 })
 
@@ -141,8 +145,11 @@ export const updateProduct = tryCatch(async (req, res) => {
    if (!product) throw new ErrorHandler('No product found', 404)
 
    if (photo) {
-      rm(product.photo, (err) => err && console.log('Old Photo Deleted'))
-      product.photo = photo.path
+      rm(
+         path.join(import.meta.dirname, '..', 'uploads', product.photo),
+         (err) => !err && console.log('Old Photo Deleted')
+      )
+      product.photo = photo.filename
    }
 
    if (name) product.name = name
@@ -169,7 +176,7 @@ export const deleteProduct = tryCatch(async (req, res) => {
 
    if (!product) throw new ErrorHandler('No product found', 404)
 
-   rm(product.photo, (err) => err && console.log(err))
+   rm(path.join(import.meta.dirname, '..', 'uploads', product.photo), (err) => !err && console.log(err))
    await product.deleteOne()
 
    invalidateCache({ product: true, admin: true, productId: id })
@@ -208,7 +215,7 @@ export const searchAllProducts = tryCatch(async (req: Request<{}, {}, {}, ISearc
 
    const [paginatedFilteredProducts, allFilteredProducts] = await Promise.all([
       Product.find(baseQuery)
-         .sort(sort && { price: sort === 'asc' ? 'asc' : 'desc' })
+         .sort(sort ? { price: sort === 'asc' ? 'asc' : 'desc' } : {})
          .limit(limit)
          .skip(skip),
       Product.find(baseQuery),

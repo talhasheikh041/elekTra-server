@@ -1,6 +1,7 @@
 import express from 'express'
 import NodeCache from 'node-cache'
 import path from 'path'
+import cors from 'cors'
 import 'dotenv/config'
 
 // Routes imports
@@ -16,14 +17,22 @@ import morgan from 'morgan'
 
 // Utils imports
 import { connectDB } from './utils/features.js'
+import Stripe from 'stripe'
 
 const PORT = process.env.PORT || 3000
-const app = express()
-export const myCache = new NodeCache()
+const DATABASE_URI = process.env.DATABASE_URI || ''
+const STRIPE_KEY = process.env.STRIPE_KEY || ''
 
-connectDB()
+const app = express()
+
+export const myCache = new NodeCache()
+export const stripe = new Stripe(STRIPE_KEY)
+
+connectDB(DATABASE_URI)
 
 app.use(morgan('dev'))
+
+app.use(cors())
 
 app.use(express.json())
 

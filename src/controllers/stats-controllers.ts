@@ -108,7 +108,7 @@ export const getDashboardStats = tryCatch(async (req, res) => {
       lastSixMonthOrdersQuery,
       Product.distinct('category'),
       User.countDocuments({ gender: 'male' }),
-      Order.find().select(['orderItems', 'discount', ' total', 'status']).limit(4),
+      Order.find().select(['orderItems', 'discount', 'total', 'status', 'user']).populate('user', 'name').limit(4),
    ])
 
    // Calculate Count
@@ -155,6 +155,8 @@ export const getDashboardStats = tryCatch(async (req, res) => {
       discount: transaction.discount,
       status: transaction.status,
       quantity: transaction.orderItems.length,
+      user: transaction.user,
+      amount: transaction.total,
    }))
 
    const stats = {

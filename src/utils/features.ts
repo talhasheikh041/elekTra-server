@@ -3,9 +3,9 @@ import { InvalidateCacheParam, OrderItemType } from '../types/types.js'
 import { Product } from '../models/Product.js'
 import { myCache } from '../app.js'
 
-export const connectDB = async () => {
+export const connectDB = async (DATABASE_URI: string) => {
    try {
-      const { connection } = await mongoose.connect(process.env.DATABASE_URI!, { dbName: 'elektraDB' })
+      const { connection } = await mongoose.connect(DATABASE_URI, { dbName: 'elektraDB' })
       console.log(`Connected to DB ${connection.host}`)
    } catch (error) {
       console.log(error)
@@ -79,7 +79,7 @@ export const getCategoryPercentage = async ({
       const count = categoriesCount[index]
       return {
          ...total,
-         [category]: (count / productCount) * 100,
+         [category]: Number(((count / productCount) * 100).toFixed(0)),
       }
    }, {})
 

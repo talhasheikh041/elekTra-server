@@ -2,6 +2,21 @@ import { isValidObjectId } from 'mongoose'
 import { tryCatch } from '../middlewares/error.js'
 import { Coupon } from '../models/Coupon.js'
 import ErrorHandler from '../utils/utility-class.js'
+import { stripe } from '../app.js'
+
+export const createPaymentIntent = tryCatch(async (req, res) => {
+   const amount = req.body.amount
+   const convertedAmount = Number(amount) * 100
+
+   if (!amount) throw new ErrorHandler('Please provide amount', 400)
+
+   const paymentIntent = await stripe.paymentIntents.create({ amount: convertedAmount, currency: 'usd' })
+
+   res.status(201).json({
+      success: true,
+      clientSecret: paymentIntent.client_secret,
+   })
+})
 
 export const newCoupon = tryCatch(async (req, res) => {
    const { coupon, amount } = req.body

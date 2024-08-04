@@ -9,7 +9,7 @@ import { isValidObjectId } from 'mongoose'
 export const newOrder = tryCatch(async (req: Request<{}, {}, NewOrderRequestBody>, res) => {
    const { discount, orderItems, shippingCharges, shippingInfo, subtotal, tax, total, user } = req.body
 
-   if (!discount || !orderItems || !orderItems || !shippingInfo || !subtotal || !tax || !total || !user) {
+   if (!orderItems.length || !subtotal || !tax || !total || !user) {
       throw new ErrorHandler('Please provide all the fields', 400)
    }
 
@@ -60,18 +60,18 @@ export const myOrders = tryCatch(async (req, res) => {
    if (cachedMyOrders) {
       return res.status(200).json({
          success: true,
-         myOrders: cachedMyOrders,
+         orders: cachedMyOrders,
          totalOrders: cachedMyOrders.length,
       })
    }
 
-   const myOrders = await Order.find({ user: id })
+   const myOrders = await Order.find({ user: id }).sort({ createdAt: 'desc' })
    if (!myOrders.length) throw new ErrorHandler('No Orders found!', 404)
    setCache(`myOrders-${id}`, myOrders)
 
    res.status(200).json({
       success: true,
-      myOrders: myOrders,
+      orders: myOrders,
       totalOrders: myOrders.length,
    })
 })
@@ -82,18 +82,18 @@ export const allOrders = tryCatch(async (req, res) => {
    if (cachedAllOrders) {
       return res.status(200).json({
          success: true,
-         allOrders: cachedAllOrders,
+         orders: cachedAllOrders,
          totalOrders: cachedAllOrders.length,
       })
    }
 
-   const allOrders = await Order.find()
+   const allOrders = await Order.find().populate('user', 'name')
    if (!allOrders.length) throw new ErrorHandler('No Orders Found', 404)
    setCache(`all-orders`, allOrders)
 
    res.status(200).json({
       success: true,
-      allOrders,
+      orders: allOrders,
       totalOrders: allOrders.length,
    })
 })
@@ -124,22 +124,16 @@ export const getSingleOrder = tryCatch(async (req, res) => {
 
 export const processOrder = tryCatch(async (req, res) => {
    const { orderId } = req.params
+   const status = req.query.status as 'Processing' | 'Shipped' | 'Delivered'
 
    if (orderId && !isValidObjectId(orderId)) throw new ErrorHandler('Invalid Order ID', 400)
+
+   if (!status) throw new ErrorHandler('Please provide order status', 400)
 
    const order = await Order.findById(orderId)
    if (!order) throw new ErrorHandler('Cannot find order details', 404)
 
-   switch (order.status) {
-      case 'Processing':
-         order.status = 'Delivered'
-         break
-      case 'Delivered':
-         order.status = 'Shipped'
-         break
-      default:
-         break
-   }
+   order.status = status
 
    await order.save()
 
