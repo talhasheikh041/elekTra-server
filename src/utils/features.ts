@@ -2,6 +2,8 @@ import mongoose from 'mongoose'
 import { InvalidateCacheParam, OrderItemType } from '../types/types.js'
 import { Product } from '../models/Product.js'
 import { myCache } from '../app.js'
+import { Review } from '../models/Review.js'
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary'
 
 export const connectDB = async (DATABASE_URI: string) => {
    try {
@@ -12,7 +14,15 @@ export const connectDB = async (DATABASE_URI: string) => {
    }
 }
 
-export const invalidateCache = ({ product, admin, order, orderId, userId, productId }: InvalidateCacheParam) => {
+export const invalidateCache = ({
+   product,
+   admin,
+   order,
+   review,
+   orderId,
+   userId,
+   productId,
+}: InvalidateCacheParam) => {
    if (product) {
       const productKeys: string[] = ['latest-products', 'product-categories', 'admin-products']
 
@@ -31,6 +41,10 @@ export const invalidateCache = ({ product, admin, order, orderId, userId, produc
    }
    if (admin) {
       myCache.del(['admin-stats', 'admin-pie-charts', 'admin-bar-charts', 'admin-line-charts'])
+   }
+
+   if (review) {
+      myCache.del([`reviews-${productId}`])
    }
 }
 
@@ -117,4 +131,72 @@ export const getChartData = ({ length, docArr, today, property }: GetChartDataTy
    })
 
    return data
+}
+
+export const findAverageRating = async (productId: mongoose.Types.ObjectId) => {
+   const result = await Review.aggregate<{
+      _id: string
+      averageRating: number
+      totalReviews: number
+   }>([
+      {
+         $match: { product: productId },
+      },
+      {
+         $group: {
+            _id: '$product',
+            averageRating: { $avg: '$rating' },
+            totalReviews: { $sum: 1 },
+         },
+      },
+      {
+         $limit: 1,
+      },
+   ])
+
+   return result[0]
+}
+
+export const uploadToCloudinary = async (photos: Express.Multer.File[]) => {
+   const uploadedPhotos = await Promise.all(
+      photos.map(async (photo) => {
+         // Upload the image to Cloudinary with transformations
+         const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+            cloudinary.uploader
+               .upload_stream(
+                  {
+                     resource_type: 'image',
+                     format: 'webp',
+                  },
+                  (error, uploadResult) => {
+                     if (error) {
+                        return reject(error)
+                     }
+                     return resolve(uploadResult!)
+                  }
+               )
+               .end(photo.buffer)
+         })
+
+         return result
+      })
+   )
+
+   return uploadedPhotos.map((photo) => ({
+      public_id: photo.public_id,
+      url: photo.secure_url,
+   }))
+}
+
+export const deleteFromCloudinary = async (publicIds: string[]) => {
+   const promises = publicIds.map((id) => {
+      return new Promise<void>((resolve, reject) => {
+         cloudinary.uploader.destroy(id, (error, result) => {
+            if (error) return reject(error)
+            resolve()
+         })
+      })
+   })
+
+   await Promise.all(promises)
 }

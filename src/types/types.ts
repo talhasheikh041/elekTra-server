@@ -20,6 +20,8 @@ export interface INewProductRequestBody {
    price: number
    stock: number
    category: string
+   shortDescription: string
+   detail: string
 }
 
 export interface ISearchRequestQuery {
@@ -45,6 +47,7 @@ export type InvalidateCacheParam = {
    product?: boolean
    order?: boolean
    admin?: boolean
+   review?: boolean
    userId?: string
    orderId?: string
    productId?: string | string[]

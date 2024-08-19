@@ -3,6 +3,7 @@ import NodeCache from 'node-cache'
 import path from 'path'
 import cors from 'cors'
 import 'dotenv/config'
+import { v2 as cloudinary } from 'cloudinary'
 
 // Routes imports
 import userRoutes from './routes/user-routes.js'
@@ -22,6 +23,10 @@ import Stripe from 'stripe'
 const PORT = process.env.PORT || 3000
 const DATABASE_URI = process.env.DATABASE_URI || ''
 const STRIPE_KEY = process.env.STRIPE_KEY || ''
+
+cloudinary.config({
+   secure: true
+ });
 
 const app = express()
 
