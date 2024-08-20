@@ -200,3 +200,23 @@ export const deleteFromCloudinary = async (publicIds: string[]) => {
 
    await Promise.all(promises)
 }
+
+export const extractImageIds = (htmlString: string): string[] | null => {
+   const imgSrcRegex = /<img[^>]+src="([^">]+)"/g
+   const cloudinaryIdRegex = /\/v\d+\/([^/]+)\.(?:jpg|jpeg|png|webp|gif)/
+
+   let match: RegExpExecArray | null
+   const imageIds: string[] = []
+
+   // Loop through all matches of img src in the HTML string
+   while ((match = imgSrcRegex.exec(htmlString)) !== null) {
+      const srcUrl = match[1]
+      const idMatch = cloudinaryIdRegex.exec(srcUrl)
+
+      if (idMatch) {
+         imageIds.push(idMatch[1])
+      }
+   }
+
+   return imageIds.length > 0 ? imageIds : null
+}

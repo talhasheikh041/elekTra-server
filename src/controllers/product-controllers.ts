@@ -9,6 +9,7 @@ import { User } from '../models/User.js'
 import { INewProductRequestBody, ISearchBaseQuery, ISearchRequestQuery } from '../types/types.js'
 import {
    deleteFromCloudinary,
+   extractImageIds,
    findAverageRating,
    getFromCache,
    invalidateCache,
@@ -167,11 +168,8 @@ export const updateProduct = tryCatch(async (req, res) => {
 
    if (photos && photos.length > 0) {
       const photosURL = await uploadToCloudinary(photos)
-
       const ids = product.photos.map((photo) => photo.public_id)
-
       await deleteFromCloudinary(ids)
-
       product.photos = photosURL
    }
 
@@ -179,6 +177,8 @@ export const updateProduct = tryCatch(async (req, res) => {
    if (price) product.price = price
    if (stock) product.stock = stock
    if (category) product.category = category
+   if (shortDescription) product.shortDescription = shortDescription
+   if (detail) product.detail = detail
 
    const updatedProduct = await product.save()
 
@@ -201,6 +201,14 @@ export const deleteProduct = tryCatch(async (req, res) => {
 
    const ids = product.photos.map((photo) => photo.public_id)
    await deleteFromCloudinary(ids)
+
+   const detailPhotoIds = extractImageIds(product.detail)
+
+   console.log(detailPhotoIds)
+
+   if (detailPhotoIds) {
+      await deleteFromCloudinary(detailPhotoIds)
+   }
 
    await product.deleteOne()
 
