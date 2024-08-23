@@ -20,9 +20,9 @@ app.post('/coupon/new', adminOnly, newCoupon)
 app.get('/discount', applyDiscount)
 
 // route - /api/v1/payment/coupon/all
-app.get('/coupon/all', allCoupons)
+app.get('/coupon/all', adminOnly, allCoupons)
 
 // route - /api/v1/payment/coupon/:couponId
-app.delete('/coupon/:couponId', deleteCoupon)
+app.delete('/coupon/:couponId', adminOnly, deleteCoupon)
 
 export default app

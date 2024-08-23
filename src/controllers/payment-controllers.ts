@@ -19,11 +19,11 @@ export const createPaymentIntent = tryCatch(async (req, res) => {
 })
 
 export const newCoupon = tryCatch(async (req, res) => {
-   const { coupon, amount } = req.body
+   const { coupon, discount } = req.body
 
-   if (!coupon || !amount) throw new ErrorHandler('Please provide coupon and amount', 400)
+   if (!coupon || !discount) throw new ErrorHandler('Please provide coupon and discount', 400)
 
-   const newCoupon = await Coupon.create({ coupon, amount })
+   const newCoupon = await Coupon.create({ coupon, discount })
 
    if (!newCoupon) throw new ErrorHandler('Coupon cannot be created. Check database', 400)
 
@@ -37,13 +37,13 @@ export const applyDiscount = tryCatch(async (req, res) => {
 
    if (!coupon) throw new ErrorHandler('Please provide coupon', 400)
 
-   const discount = await Coupon.findOne({ coupon })
+   const storedCoupon = await Coupon.findOne({ coupon })
 
-   if (!discount) throw new ErrorHandler('Invalid Coupon', 400)
+   if (!storedCoupon) throw new ErrorHandler('Invalid Coupon', 400)
 
    res.status(200).json({
       success: true,
-      discount: discount.amount,
+      discount: storedCoupon.discount,
    })
 })
 export const allCoupons = tryCatch(async (req, res) => {

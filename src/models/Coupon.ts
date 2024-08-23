@@ -2,7 +2,7 @@ import mongoose from 'mongoose'
 
 interface ICouponSchema extends Document {
    coupon: string
-   amount: number
+   discount: number
 }
 
 const couponSchema = new mongoose.Schema<ICouponSchema>({
@@ -11,7 +11,7 @@ const couponSchema = new mongoose.Schema<ICouponSchema>({
       required: [true, 'Please provide coupon value'],
       unique: true,
    },
-   amount: {
+   discount: {
       type: Number,
       required: [true, 'Please provide discount amount'],
    },
