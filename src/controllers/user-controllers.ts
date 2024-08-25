@@ -81,3 +81,30 @@ export const deleteUser = tryCatch(async (req, res, next) => {
       message: `User "${user.name}" deleted successfully!`,
    })
 })
+
+export const updateUser = tryCatch(async (req, res, next) => {
+   const { id } = req.params
+   const { role } = req.body
+   const adminId = req.query.id
+
+   if (!id || !role) throw new ErrorHandler('Please provide user credentials', 400)
+
+   if (adminId === id) throw new ErrorHandler('User cannot change his own role', 400)
+
+   const user = await User.findById(id)
+
+   if (!user) {
+      throw new ErrorHandler('No User found!', 404)
+   }
+
+   user.role = role
+
+   const updatedUser = await user.save()
+
+   if (!updatedUser) throw new ErrorHandler('Cannot update the user', 400)
+
+   return res.status(200).json({
+      success: true,
+      message: 'User updated successfully',
+   })
+})
