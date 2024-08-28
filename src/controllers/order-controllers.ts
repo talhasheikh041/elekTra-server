@@ -103,7 +103,7 @@ export const getSingleOrder = tryCatch(async (req, res) => {
 
    if (!isValidObjectId(orderId)) throw new ErrorHandler('Invalid Order ID', 400)
 
-   const cachedOrder = getFromCache<object[]>(`order-${orderId}`)
+   const cachedOrder = getFromCache<object>(`order-${orderId}`)
 
    if (cachedOrder) {
       return res.status(200).json({
