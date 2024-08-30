@@ -33,17 +33,19 @@ export const newCoupon = tryCatch(async (req, res) => {
    })
 })
 export const applyDiscount = tryCatch(async (req, res) => {
-   const { coupon } = req.query
+   const { coupon, total } = req.query
 
-   if (!coupon) throw new ErrorHandler('Please provide coupon', 400)
+   if (!coupon || !total) throw new ErrorHandler('Please provide coupon and total amount', 400)
 
    const storedCoupon = await Coupon.findOne({ coupon })
 
    if (!storedCoupon) throw new ErrorHandler('Invalid Coupon', 400)
 
+   const discount = (Number(total) * storedCoupon.discount) / 100
+
    res.status(200).json({
       success: true,
-      discount: storedCoupon.discount,
+      discount,
    })
 })
 export const allCoupons = tryCatch(async (req, res) => {
