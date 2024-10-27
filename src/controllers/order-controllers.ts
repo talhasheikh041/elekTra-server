@@ -5,6 +5,9 @@ import ErrorHandler from '../utils/utility-class.js'
 import { Order } from '../models/Order.js'
 import { getFromCache, invalidateCache, reduceStock, setCache } from '../utils/features.js'
 import { isValidObjectId } from 'mongoose'
+import { messaging } from '../config/firebase.js'
+import { Message, MulticastMessage } from 'firebase-admin/messaging'
+import { FCMToken } from '../models/FCMToken.js'
 
 export const newOrder = tryCatch(async (req: Request<{}, {}, NewOrderRequestBody>, res) => {
    const { discount, orderItems, shippingCharges, shippingInfo, subtotal, tax, total, user } = req.body
@@ -43,6 +46,24 @@ export const newOrder = tryCatch(async (req: Request<{}, {}, NewOrderRequestBody
       productId: orderItems.map((item) => item.productId.toString()),
       userId: user,
    })
+
+   const fcmTokens = await FCMToken.find()
+   const fcmTokenArr = fcmTokens.map((fcm) => fcm.token)
+
+   const payload: MulticastMessage = {
+      tokens: fcmTokenArr,
+      notification: {
+         title: `New Order Received of ${orderItems.length} item(s)`,
+         body: `Total Price: ${total}`,
+      },
+      webpush: {
+         fcmOptions: {
+            link: `/admin/transactions/${newOrder._id}`,
+         },
+      },
+   }
+
+   await messaging.sendEachForMulticast(payload)
 
    res.status(201).json({
       success: true,

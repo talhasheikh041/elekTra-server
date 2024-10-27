@@ -3,6 +3,7 @@ import NodeCache from 'node-cache'
 import path from 'path'
 import cors from 'cors'
 import 'dotenv/config'
+import './config/firebase.js'
 import { v2 as cloudinary } from 'cloudinary'
 
 // Routes imports
@@ -11,6 +12,7 @@ import productRoutes from './routes/product-routes.js'
 import orderRoutes from './routes/order-routes.js'
 import paymentRoutes from './routes/payment-routes.js'
 import statsRoutes from './routes/stats-routes.js'
+import fcmRoutes from './routes/fcm-routes.js'
 
 // Middleware imports
 import { errorMiddleware } from './middlewares/error.js'
@@ -25,8 +27,8 @@ const DATABASE_URI = process.env.DATABASE_URI || ''
 const STRIPE_KEY = process.env.STRIPE_KEY || ''
 
 cloudinary.config({
-   secure: true
- });
+   secure: true,
+})
 
 const app = express()
 
@@ -52,6 +54,7 @@ app.use('/api/v1/product', productRoutes)
 app.use('/api/v1/order', orderRoutes)
 app.use('/api/v1/payment', paymentRoutes)
 app.use('/api/v1/dashboard', statsRoutes)
+app.use('/api/v1/fcm', fcmRoutes)
 
 app.all('*', (req, res) => {
    res.status(404)

@@ -13,6 +13,7 @@
     "forceConsistentCasingInFileNames": true,           
     /* Type Checking */
     "strict": true,        
-    "sourceMap": true                             
+    "sourceMap": true,
+    "resolveJsonModule": true      // Resolve JSON imports                     
   }
 }
